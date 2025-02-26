@@ -9,6 +9,9 @@ server = {
     "port": 22,  # Default SSH port
 }
 
+# Argument to pass into command
+directory = "/var/log"
+
 try:
     # Connect to the server via SSH
     connection = ConnectHandler(**server)
@@ -18,16 +21,20 @@ try:
     print(output)
 
     # Run multiple commands
-    commands = [
+    commands_static = [
         "uptime",         # Show system uptime
         "df -h",          # Show disk usage
         "whoami"          # Show current user
     ]
     
-    for cmd in commands:
+    commands_dynamic = f"ls -l {directory}"
+
+    for cmd in commands_static:
         response = connection.send_command(cmd)
         print(f"\nOutput of '{cmd}':\n{response}")
-
+    
+    output = connection.send_command(commands_dynamic)
+    print(f"Output of '{commands_dynamic}':\n{output}")
     # Close connection
     connection.disconnect()
 
