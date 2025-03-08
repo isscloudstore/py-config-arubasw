@@ -1,13 +1,13 @@
 from netmiko import ConnectHandler
 import re
 import argparse
+import paramiko
+import time
 
 # Set up argument parser
 parser = argparse.ArgumentParser(description="Send command to server via SSH")
 parser.add_argument("device_ip", type=str, help="Device Ip address")
 parsed_args = parser.parse_args()
-
-
 
 # Aruba switch details
 device = {
@@ -16,6 +16,41 @@ device = {
     "username": "admin",
     "password": "aruba",
 }
+
+def change_initial_password(host, username, old_password, new_password, prompt="password:"):
+    """
+    SSH into a device and change the password on first login.
+    
+    :param host: Device IP
+    :param username: SSH username
+    :param old_password: Initial default password
+    :param new_password: New password to set
+    :param prompt: Expected password change prompt (adjust based on device)
+    """
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())  
+        client.connect(host, username=username, password=old_password, look_for_keys=False, allow_agent=False)
+        
+        shell = client.invoke_shell()
+        time.sleep(10)
+        output = shell.recv(1000).decode()  # Read welcome message
+        print(output)
+
+        if "password" in output.lower():  # Detect password change prompt
+            shell.send(new_password + "\n")
+            time.sleep(1)
+            shell.send(new_password + "\n")  # Confirm new password
+            time.sleep(1)
+
+        shell.send("exit\n")
+        client.close()
+
+    except Exception as e:
+        print(f"SSH Error: {e}")
+
+# First step change password when initial login
+change_initial_password(host=parsed_args.device_ip, username="admin", old_password="", new_password="aruba")
 
 try:
     # Connect to the switch
