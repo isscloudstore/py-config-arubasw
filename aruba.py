@@ -60,11 +60,11 @@ try:
     output_connection=connection.send_command(f"show system\n")
     pattern_pn = r"Product Name\s+\:\s+(.*?)\s"
     matches_pn = re.findall(pattern_pn, output_connection) # Extract Product Name
-    print(matches_pn)
+    print(matches_pn[0])
 
     # Load configuration from tftp server
-    connection.send_command("copy tftp://192.168.10.1/{matches_pn[0]}.cfg running-config", expect_string=r"#")
-    connection.send_command("copy running-config startup-config", expect_string=r"#")
+    connection.send_command(f"copy tftp://192.168.10.1/{matches_pn[0]}.cfg running-config", expect_string=r"#")
+    connection.send_command(f"copy running-config startup-config", expect_string=r"#")
 
 
     # Get IP Address for change ip of vlan 1021
